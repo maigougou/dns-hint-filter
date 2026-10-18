@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+config.json
+dist/
+*.tar.gz
+*.zip
+.DS_Store
+.env
+.env.*
+*.egg-info/
+build/

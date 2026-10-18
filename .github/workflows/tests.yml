@@ -1,0 +1,48 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.9', '3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -r requirements.txt
+      - run: python dns_hint_filter.py --config config.example.json --check-config
+      - run: python -m unittest discover -s tests -v
+
+  distributions:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: debian:12-slim
+            install: apt-get update && apt-get install -y python3 python3-venv && python3 -m venv /opt/test-venv && /opt/test-venv/bin/python -m pip install -r requirements.txt
+            python: /opt/test-venv/bin/python
+          - image: debian:13-slim
+            install: apt-get update && apt-get install -y python3 python3-dnspython
+            python: python3
+          - image: fedora:latest
+            install: dnf install -y python3 python3-dns
+            python: python3
+    container: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install distribution dependencies
+        run: ${{ matrix.install }}
+      - run: ${{ matrix.python }} dns_hint_filter.py --config config.example.json --check-config
+      - run: ${{ matrix.python }} -m unittest discover -s tests -v
