@@ -28,7 +28,9 @@ def response():
 class RewriteTests(unittest.TestCase):
     def test_all_sections_and_multiple_records_preserve_other_fields(self):
         message = response()
-        text = '1 . mandatory=alpn,ipv4hint,ipv6hint alpn=h2,h3 port=8443 ipv4hint=192.0.2.1 ipv6hint=2001:db8::1 ech=AAE= key65400="opaque"'
+        # A length-prefixed ECHConfigList with one unknown-version entry.
+        # Keep it structurally valid even when dnspython validates ECH framing.
+        text = '1 . mandatory=alpn,ipv4hint,ipv6hint alpn=h2,h3 port=8443 ipv4hint=192.0.2.1 ipv6hint=2001:db8::1 ech=AAT//wAA key65400="opaque"'
         original = rr("HTTPS", text, '2 target.test. ipv4hint=192.0.2.2')[0]
         for section in (message.answer, message.authority, message.additional):
             section.append(rr("HTTPS", text, '2 target.test. ipv4hint=192.0.2.2'))
